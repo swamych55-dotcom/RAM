@@ -1,0 +1,320 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Payment Receipt</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 40px;
+      background: #f4f4f4;
+    }
+
+    .invoice-box {
+      position: relative;
+      max-width: 800px;
+      margin: auto;
+      padding: 30px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      color: #333;
+      z-index: 1;
+    }
+
+    .receipt-background::before {
+      content: "";
+      position: absolute;
+      top: 30px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('c:\Users\chell\Downloads\bhavishya.logo.png') no-repeat center center;
+      background-size: 600px;
+      opacity: 0.10;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #0fc4fc;
+      color: white;
+      padding: 20px;
+      border-radius: 6px 6px 0 0;
+    }
+
+    .invoice-header img {
+      height: 60px;
+      margin-right: 20px;
+    }
+
+    .invoice-header h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    .invoice-header .contact {
+      text-align: right;
+      font-size: 14px;
+    }
+
+    .details-grid, .address-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      padding: 20px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .address-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .details-grid div, .address-grid div {
+      padding: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    table th, table td {
+      border-bottom: 1px solid #eee;
+      padding: 12px;
+      text-align: left;
+    }
+
+    .total {
+      text-align: right;
+      font-weight: bold;
+      margin-top: 10px;
+      font-size: 18px;
+    }
+
+    .signature-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 40px;
+      width: 100%;
+    }
+
+    input {
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+
+    .button-row {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #0fc4fc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background-color: #0aa7d9;
+    }
+
+    #qrcode, #barcode {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    @media print {
+      body {
+        background: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .btn,
+      .button-row {
+        display: none !important;
+      }
+
+      .receipt-background::before {
+        opacity: 0.15 !important;
+      }
+
+      input {
+        border: none !important;
+        outline: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="invoice-box receipt-background" id="invoice">
+    <div class="invoice-header">
+      <div style="display: flex; align-items: center;">
+        <img src="bhavishya.logo.png" alt="Logo" />
+        <h1>𝖡𝖧𝖠𝖵𝖨𝖲𝖧𝖸𝖠 𝖠𝖰𝖴𝖠 𝖥𝖤𝖤𝖣𝖲 & 𝖭𝖤𝖤𝖣𝖲</h1>
+      </div>
+      <div class="contact">
+        <p><strong>Receipt of Payment</strong><br>
+        Pro: Kadali Durga Siva Kumar<br>
+        +91 7569921188<br>
+        bhavishyaaquafeeds@gmail.com.au<br>
+        www.bhavishyaaquafeeds.com.au</p>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <div><strong>Receipt No</strong><br><input type="text" id="receiptNo" value="01" /></div>
+      <div><strong>Date</strong><br><span id="date"></span></div>
+      <div><strong>Time</strong><br><span id="clock">--:--:--</span></div>
+    </div>
+
+    <div class="address-grid">
+      <div>
+        <strong>From</strong><br>
+        𝖡𝖧𝖠𝖵𝖨𝖲𝖧𝖸𝖠 𝖠𝖰𝖴𝖠 𝖥𝖤𝖤𝖣𝖲 & 𝖭𝖤𝖤𝖣𝖲<br>
+        Mori Lingammacheruvu<br>
+        Pincode: 533250<br>
+        Andhra Pradesh, India
+      </div>
+      <div>
+        <strong>To</strong><br>
+        <input type="text" id="customerName" placeholder="Enter Customer Name" />
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Product Name</th>
+          <th>Quantity</th>
+          <th>Unit Price (₹)</th>
+          <th>Weight</th>
+          <th>Amount (₹)</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr>
+          <td><input type="text" name="productName[]" /></td>
+          <td><input type="number" name="quantity[]" class="qty" oninput="updateRow(this)" /></td>
+          <td><input type="number" name="unitPrice[]" class="price" oninput="updateRow(this)" /></td>
+          <td><input type="text" name="weight[]" /></td>
+          <td><input type="number" name="amount[]" class="amount" readonly /></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button class="btn" onclick="addRow()">+ Add Product</button>
+
+    <div class="total">
+      GST / Tax (₹): <input type="number" id="gst" value="0" oninput="calculateTotal()" />
+      <br />
+      Total (INR): <strong><span id="total">0.00</span></strong>
+    </div>
+
+    <div id="qrcode"></div>
+
+    <div class="signature-row">
+      <div>Signature Placeholder</div>
+      <div>Issued by, signature:</div>
+    </div>
+  </div>
+
+  <div class="button-row">
+    <button class="btn" onclick="window.print()">🖨️ Print</button>
+    <button class="btn" onclick="downloadPDF()">⬇️ Download PDF</button>
+    <button class="btn" onclick="saveToDatabase()">💾 Save</button>
+  </div>
+
+  <script>
+    function updateClockAndDate() {
+      const now = new Date();
+      document.getElementById("clock").textContent = now.toLocaleTimeString();
+      document.getElementById("date").textContent = now.toLocaleDateString('en-GB');
+    }
+
+    setInterval(updateClockAndDate, 1000);
+    updateClockAndDate();
+
+    function addRow() {
+      const tableBody = document.getElementById("table-body");
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="text" name="productName[]" /></td>
+        <td><input type="number" name="quantity[]" class="qty" oninput="updateRow(this)" /></td>
+        <td><input type="number" name="unitPrice[]" class="price" oninput="updateRow(this)" /></td>
+        <td><input type="text" name="weight[]" /></td>
+        <td><input type="number" name="amount[]" class="amount" readonly /></td>
+      `;
+      tableBody.appendChild(row);
+    }
+
+    function updateRow(element) {
+      const row = element.closest("tr");
+      const qty = parseFloat(row.querySelector(".qty").value) || 0;
+      const price = parseFloat(row.querySelector(".price").value) || 0;
+      const amount = qty * price;
+      row.querySelector(".amount").value = amount.toFixed(2);
+      calculateTotal();
+    }
+
+    function calculateTotal() {
+      const amounts = document.querySelectorAll(".amount");
+      let total = 0;
+      amounts.forEach(input => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val)) total += val;
+      });
+      const gst = parseFloat(document.getElementById("gst").value) || 0;
+      total += gst;
+      document.getElementById("total").textContent = total.toFixed(2);
+    }
+
+    function downloadPDF() {
+      const element = document.getElementById("invoice");
+      const opt = {
+        margin:       0.5,
+        filename:     'receipt.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().from(element).set(opt).save();
+    }
+
+    function generateQRCode() {
+      const customerName = document.getElementById("customerName").value || "unknown";
+      const receiptNo = document.getElementById("receiptNo").value || "00";
+      const qrcode = new QRCode(document.getElementById("qrcode"), {
+        text: `https://example.com/receipt/${receiptNo}-${customerName}`,
+        width: 100,
+        height: 100,
+      });
+    }
+
+    function saveToDatabase() {
+      alert("🛠️ This would save to the database using PHP/MySQL backend (not implemented in HTML).");
+    }
+
+    // Generate QR Code once page is loaded
+    window.onload = generateQRCode;
+  </script>
+</body>
+</html>
+
